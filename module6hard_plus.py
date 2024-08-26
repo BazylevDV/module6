@@ -1,70 +1,99 @@
 import math
 
-
 class Figure:
-    def __init__(self, color=None, sides=None):
-        self.__color = color if color else [0, 0, 0]
-        self.__sides = sides if sides else []
+    """
+    Базовый класс для всех геометрических фигур.
+    Содержит общие атрибуты и методы для работы с цветом и сторонами фигур.
+    """
+    def __init__(self, color=(0, 0, 0), sides=None):
+        self._color = list(color)  # Преобразуем кортеж в список
+        self._sides = sides if sides is not None else []
         self.filled = False
 
     def get_color(self):
-        return self.__color
+        """Возвращает текущий цвет фигуры."""
+        return self._color
 
-
-    def __is_valid_color(self, r, g, b):
+    @staticmethod
+    def _is_valid_color(r, g, b):
+        """Проверяет, является ли цвет допустимым (каждый компонент в диапазоне от 0 до 255)."""
         return all(0 <= c <= 255 for c in (r, g, b))
 
     def set_color(self, r, g, b):
-        if self.__is_valid_color(r, g, b):
-            self.__color = [r, g, b]
+        """Устанавливает новый цвет фигуры, если он допустим."""
+        if self._is_valid_color(r, g, b):
+            self._color = [r, g, b]
 
-    def __is_valid_sides(self, *new_sides):
-        return len(new_sides) == len(self.__sides) and all(isinstance(side, int) and side > 0 for side in new_sides)
+    def _is_valid_sides(self, *new_sides):
+        """Проверяет, являются ли новые стороны допустимыми."""
+        if new_sides:
+            return len(new_sides) == len(self._sides) and all(
+                isinstance(side, int) and side > 0 for side in new_sides)
+        return False
 
     def get_sides(self):
-        return self.__sides
+        """Возвращает текущие стороны фигуры."""
+        return self._sides
 
-    def __len__(self):
+    def get_perimeter(self):
+        """Возвращает периметр фигуры. Должен быть переопределен в дочерних классах."""
         raise NotImplementedError("Perimeter must be implemented by child classes")
 
     def set_sides(self, *new_sides):
-        if not self.__is_valid_sides(*new_sides):
+        """Устанавливает новые стороны фигуры, если они допустимы."""
+        if not self._is_valid_sides(*new_sides):
             return
-        self.__sides = list(new_sides)
+        self._sides = list(new_sides)
 
 
 class Circle(Figure):
-    def __init__(self, color=None, radius=None):
+    """
+    Класс для круга. Наследует от Figure и добавляет специфичные для круга методы.
+    """
+    def __init__(self, color=(0, 0, 0), radius=None):
         super().__init__(color, [radius])
-        self.__radius = radius
+        self._radius = radius
 
     def get_square(self):
-        return self.__radius ** 2 * math.pi
+        """Возвращает площадь круга."""
+        return self._radius ** 2 * math.pi
+
+    def get_perimeter(self):
+        """Возвращает округленный периметр круга (длина окружности)."""
+        return round(2 * self._radius * math.pi)
+
+    def set_sides(self, *new_sides):
+        """Устанавливает радиус круга, если передано одно значение."""
+        if len(new_sides) == 1:
+            self._radius = new_sides[0]
+            self._sides = [self._radius]
 
     def __len__(self):
-        return 2 * self.__radius * math.pi
-
-
-class Triangle(Figure):
-    def __init__(self, color=None, sides=None):
-        super().__init__(color, sides)
-
-    def get_square(self):
-        sides = self.get_sides()
-        s = sum(sides) / 2
-        return math.sqrt(s * (s - sides[0]) * (s - sides[1]) * (s - sides[2]))
+        """Возвращает длину окружности (периметр) круга."""
+        return self.get_perimeter()
 
 
 class Cube(Figure):
-    def __init__(self, color=None, side=None):
-        super().__init__(color, [side] * 12)
-        self.__side = side
+    """
+    Класс для куба. Наследует от Figure и добавляет специфичные для куба методы.
+    """
+    def __init__(self, color=(0, 0, 0), side=None):
+        super().__init__(color, [side] * 12 if side is not None else [])
+        self._side = side
 
-    def __len__(self):
-        return sum(self.__sides)
+    def get_perimeter(self):
+        """Возвращает периметр куба (сумма длин всех ребер)."""
+        return sum(self._sides)
 
     def get_volume(self):
-        return self.__side ** 3
+        """Возвращает объем куба."""
+        return self._side ** 3
+
+    def set_sides(self, *new_sides):
+        """Устанавливает стороны куба, если переданы 12 одинаковых значений."""
+        if len(new_sides) == 12 and all(side == new_sides[0] for side in new_sides):
+            self._side = new_sides[0]
+            self._sides = list(new_sides)
 
 
 # Пример использования
@@ -78,13 +107,13 @@ cube1.set_color(300, 70, 15)
 print(cube1.get_color())  # [222, 35, 130]
 
 # Проверка на изменение сторон
-cube1.set_sides(5, 3, 12, 4, 5)
+cube1.set_sides(5, 3, 12, 4, 5)  # Не изменится
 print(cube1.get_sides())  # [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
 circle1.set_sides(15)
 print(circle1.get_sides())  # [15]
 
-# Проверка периметра (круга)
-print(circle1.__len__())  # 62.83185307179586
+# Проверка периметра (круга), это и есть длина
+print(len(circle1))  # 15
 
 # Проверка объёма (куба)
 print(cube1.get_volume())  # 216
